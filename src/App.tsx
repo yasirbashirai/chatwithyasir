@@ -20,6 +20,7 @@ import { postLead } from "./lib/api";
 import { loadSession, saveSession, clearSession, loadProfile, saveProfile, clearProfile, type Session } from "./lib/session";
 import { saveTranscriptAsPdf } from "./lib/transcript";
 import { playStart, playSend, playReceive, playTap, playTyping, soundEnabled, setSoundEnabled } from "./lib/sound";
+import { MAIN_SITE, WHATSAPP_URL } from "./data/config";
 
 // Admin (Yasir) mode — opened via ?admin=yasir or #admin. Reveals the crew and
 // lets Yasir chat as himself. (True cross-device live chat needs a backend.)
@@ -423,14 +424,29 @@ export default function App() {
                   <div className="text-[12px] text-teal-dark">{members.length} members · live</div>
                 </div>
 
-                {/* Request a call */}
-                <button
-                  onClick={() => openPanel("book")}
-                  className="ml-auto glass-teal gold-ring rounded-full pl-2.5 pr-3 h-9 flex items-center gap-1.5 text-white text-[13px] font-semibold transition-transform hover:scale-105 active:scale-95 shrink-0"
-                  title="Short on time? Request a call"
-                >
-                  📞 <span className="hidden sm:inline">Request a call</span>
-                </button>
+                {/* Main website link + instant WhatsApp call */}
+                <div className="ml-auto flex items-center gap-2 shrink-0">
+                  <a
+                    href={MAIN_SITE}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => playTap()}
+                    className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-teal-dark text-[13px] font-semibold hover:bg-ink/5 transition-colors"
+                    title="Visit yasirbashir.com"
+                  >
+                    🌐 <span>Visit site ↗</span>
+                  </a>
+                  <a
+                    href={WHATSAPP_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => playTap()}
+                    className="glass-teal gold-ring rounded-full pl-2.5 pr-3 h-9 flex items-center gap-1.5 text-white text-[13px] font-semibold transition-transform hover:scale-105 active:scale-95"
+                    title="Call Yasir on WhatsApp"
+                  >
+                    📞 <span className="hidden sm:inline">WhatsApp call</span>
+                  </a>
+                </div>
 
                 {/* Avatar stack */}
                 <div className="hidden md:flex -space-x-2.5">
