@@ -32,7 +32,7 @@ export function GifPicker({ onPick }: { onPick: (url: string) => void }) {
           </button>
         ))}
         {list.length === 0 && (
-          <div className="col-span-3 text-center text-sm text-ink/50 py-6">No GIFs — try "wow" or "party"</div>
+          <div className="col-span-3 text-center text-sm text-ink/50 py-6">No GIFs, try "wow" or "party"</div>
         )}
       </div>
       <div className="text-[10px] text-ink/30 text-right mt-1.5">Powered by GIPHY</div>

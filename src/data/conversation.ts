@@ -1,8 +1,8 @@
 import type { Bubble } from "../types";
 
-// Yasir's scripted brain — his whole website, as a conversation.
-// General brand site: who he is + ALL services + work + process + hire.
-// Routed by quick-reply chip id or keyword scoring. Authentic data only.
+// Yasir's scripted brain, written to sound like Yasir actually talking.
+// Warm, first-person, no robotic phrasing, no em dashes. Authentic data only.
+// Routed by quick-reply chip id or keyword scoring.
 
 export type Answer = {
   id: string;
@@ -12,11 +12,11 @@ export type Answer = {
   followups?: string[];
 };
 
-// The intro — delivered as Yasir's very first message after the visitor joins.
+// The intro, delivered as Yasir's very first message after the visitor joins.
 export const BIO: Bubble[] = [
   {
     kind: "text",
-    text: "Hey, welcome 👋 I'm Yasir Bashir — a web + AI builder. I design fast, premium websites and wire them to automation that actually converts.",
+    text: "Hey, so glad you're here 👋 I'm Yasir. I build fast, premium websites and hook them up to automation that actually brings in clients.",
   },
   {
     kind: "stat",
@@ -28,7 +28,7 @@ export const BIO: Bubble[] = [
   },
   {
     kind: "text",
-    text: "This is my whole studio in one chat — ask me anything, or jump straight in: see my work, check pricing, or kick off a project right here 👇",
+    text: "Think of this as my whole studio in one chat. Ask me anything, or just jump straight in below. Whatever's easiest for you 👇",
   },
   {
     kind: "actions",
@@ -53,11 +53,11 @@ export const ANSWERS: Answer[] = [
     bubbles: [
       {
         kind: "text",
-        text: "I'm Yasir — a web + AI builder. For 5+ years I've shipped 800+ projects for clients worldwide, and I'm a Level 2 Fiverr seller.",
+        text: "Sure, quick version. I'm Yasir, a web and AI builder. I've been doing this for over 5 years now, shipped 800+ projects for clients all over the world, and I'm a Level 2 seller on Fiverr.",
       },
       {
         kind: "text",
-        text: "My thing: premium design + smart systems in one delivery. A site that looks the part, plus the AI & automation behind it that captures and converts leads — so it actually earns its keep.",
+        text: "Here's what makes me different. I don't just hand you a pretty website. I build the smart stuff behind it too, the AI and automation that actually captures leads and turns them into clients. So the site earns its keep, it doesn't just sit there looking nice.",
       },
     ],
     followups: ["services", "work", "process", "hire"],
@@ -69,7 +69,7 @@ export const ANSWERS: Answer[] = [
     chip: "Services 🛠️",
     keywords: ["service", "services", "do", "offer", "help", "what can", "menu"],
     bubbles: [
-      { kind: "text", text: "Here's everything I build — tap any one to dig in 👇" },
+      { kind: "text", text: "Happy to walk you through it. Here's everything I build, tap any one and I'll go deeper 👇" },
       {
         kind: "services",
         items: [
@@ -83,7 +83,7 @@ export const ANSWERS: Answer[] = [
           "🤖 AI Agents",
         ],
       },
-      { kind: "text", text: "Most clients combine a few — the site and the system ship together." },
+      { kind: "text", text: "Most folks end up combining a few of these. The website and the system that runs it usually ship together." },
     ],
     followups: SERVICE_CHIPS,
   },
@@ -96,7 +96,7 @@ export const ANSWERS: Answer[] = [
     bubbles: [
       {
         kind: "text",
-        text: "Premium, fast, conversion-focused websites — corporate, personal brand, or product. Built in React / Next.js + Tailwind, animated where it earns it.",
+        text: "Websites are my bread and butter. Fast, premium, and built to convert, whether that's a corporate site, a personal brand, or a product. I build in React, Next.js and Tailwind, with animation where it actually earns its place.",
       },
       { kind: "services", items: ["Responsive & fast", "SEO-ready", "Custom design", "CMS optional"] },
       { kind: "cta", label: "See website work →", href: "https://yasirbashir.com/portfolio", note: "Real builds with screenshots." },
@@ -110,7 +110,7 @@ export const ANSWERS: Answer[] = [
     bubbles: [
       {
         kind: "text",
-        text: "High-converting funnels & landing pages — clear offer, one job per page, capture built in. Great for ads, launches and lead-gen.",
+        text: "Funnels and landing pages that actually convert. One clear offer, one job per page, and lead capture baked right in. They're perfect for ads, launches, and bringing in leads.",
       },
       { kind: "services", items: ["Lead capture", "A/B-ready", "Fast load", "Tracking wired in"] },
     ],
@@ -123,7 +123,7 @@ export const ANSWERS: Answer[] = [
     bubbles: [
       {
         kind: "text",
-        text: "I connect your tools so the busywork runs itself — lead routing, follow-ups, notifications, data sync. Smart systems that work while you sleep.",
+        text: "This is the fun part. I connect your tools so the busywork just runs itself, lead routing, follow-ups, notifications, keeping your data in sync. Basically systems that keep working while you sleep.",
       },
       { kind: "services", items: ["Lead → CRM sync", "Auto follow-up", "Notifications", "Tool integrations"] },
     ],
@@ -136,7 +136,7 @@ export const ANSWERS: Answer[] = [
     bubbles: [
       {
         kind: "text",
-        text: "Custom AI chatbots that answer questions, qualify leads and book calls — trained on your business, on-brand, 24/7. (You're literally chatting with a scripted cousin right now 😉)",
+        text: "Custom AI chatbots that answer questions, qualify leads, and book calls for you, around the clock, trained on your business and speaking in your brand's voice. You're basically chatting with a scripted cousin of one right now 😉",
       },
       { kind: "services", items: ["Trained on your content", "Lead qualifying", "Books calls", "On-brand voice"] },
     ],
@@ -149,7 +149,7 @@ export const ANSWERS: Answer[] = [
     bubbles: [
       {
         kind: "text",
-        text: "GoHighLevel & CRM builds — pipelines, automations, email/SMS sequences, calendars and reporting, all in one place so no lead slips through.",
+        text: "GoHighLevel and CRM builds. Pipelines, automations, email and SMS sequences, calendars, reporting, all living in one place so no lead ever slips through the cracks.",
       },
       { kind: "services", items: ["Pipelines", "Email/SMS sequences", "Calendars", "Reporting"] },
     ],
@@ -162,7 +162,7 @@ export const ANSWERS: Answer[] = [
     bubbles: [
       {
         kind: "text",
-        text: "Booking & scheduling systems — let clients self-book, get auto-reminders, and sync straight to your calendar. Fewer no-shows, zero back-and-forth.",
+        text: "Booking and scheduling that just works. Clients book themselves in, get auto-reminders, and it all syncs straight to your calendar. Way fewer no-shows, and zero back-and-forth emails.",
       },
       { kind: "services", items: ["Self-scheduling", "Auto reminders", "Calendar sync", "Payments optional"] },
     ],
@@ -175,7 +175,7 @@ export const ANSWERS: Answer[] = [
     bubbles: [
       {
         kind: "text",
-        text: "Online stores that sell — clean product pages, fast checkout, and the automations behind the scenes (abandoned cart, post-purchase, reviews).",
+        text: "Online stores built to actually sell. Clean product pages, a checkout that's quick and painless, and all the quiet automations doing work in the background, abandoned cart, post-purchase, review requests.",
       },
       { kind: "services", items: ["Product pages", "Fast checkout", "Cart recovery", "Email flows"] },
     ],
@@ -188,7 +188,7 @@ export const ANSWERS: Answer[] = [
     bubbles: [
       {
         kind: "text",
-        text: "AI agents that do real work — research, draft, reply, and take multi-step actions across your tools. The next level past chatbots.",
+        text: "AI agents are the next step past chatbots. These actually do the work, they research, draft, reply, and take multi-step actions across your tools, with you staying in the loop wherever it matters.",
       },
       { kind: "services", items: ["Multi-step tasks", "Tool access", "On-brand output", "Human-in-the-loop"] },
     ],
@@ -201,7 +201,7 @@ export const ANSWERS: Answer[] = [
     chip: "My work 👀",
     keywords: ["work", "portfolio", "project", "example", "case", "built", "show", "results page"],
     bubbles: [
-      { kind: "text", text: "800+ projects across many industries. A few flavors:" },
+      { kind: "text", text: "Love showing this off 😄 I've done 800+ projects across all kinds of industries. A few of the flavors:" },
       {
         kind: "services",
         items: [
@@ -214,7 +214,7 @@ export const ANSWERS: Answer[] = [
           "AI chatbots & automations",
         ],
       },
-      { kind: "text", text: "Want to flick through them right here? 👇" },
+      { kind: "text", text: "Want to flick through some real ones right here? 👇" },
       {
         kind: "actions",
         items: [
@@ -235,11 +235,11 @@ export const ANSWERS: Answer[] = [
     bubbles: [
       {
         kind: "text",
-        text: "I work with all kinds of businesses — coaches, agencies, e-commerce brands, local services, SaaS, and more.",
+        text: "Honestly, all sorts. Coaches, agencies, e-commerce brands, local service businesses, SaaS, you name it.",
       },
       {
         kind: "text",
-        text: "My deepest specialty is logistics & transport (freight brokers, carriers, 3PLs) — but the same craft applies to any brand that wants to look premium and convert.",
+        text: "If I had to pick a specialty, it's logistics and transport, freight brokers, carriers, 3PLs. That said, the same craft works for any brand that wants to look premium and actually convert.",
       },
     ],
     followups: ["work", "services", "hire"],
@@ -251,18 +251,18 @@ export const ANSWERS: Answer[] = [
     chip: "How you work ⚙️",
     keywords: ["process", "how do you work", "steps", "timeline", "how long", "workflow you", "deliver"],
     bubbles: [
-      { kind: "text", text: "Simple, no-drama process:" },
+      { kind: "text", text: "Nice and simple, no drama. It goes like this:" },
       {
         kind: "services",
         items: [
-          "1 · Discovery — your goals & offer",
-          "2 · Design — premium, on-brand",
-          "3 · Build — fast & clean",
-          "4 · Systems — automation & CRM",
+          "1 · Discovery: your goals & offer",
+          "2 · Design: premium, on-brand",
+          "3 · Build: fast & clean",
+          "4 · Systems: automation & CRM",
           "5 · Launch + support",
         ],
       },
-      { kind: "text", text: "Clear comms, fast turnarounds, and I don't disappear after launch." },
+      { kind: "text", text: "You'll always know where things stand, turnarounds are quick, and I don't vanish on you after launch." },
     ],
     followups: ["results", "hire", "services"],
   },
@@ -275,11 +275,11 @@ export const ANSWERS: Answer[] = [
     bubbles: [
       {
         kind: "text",
-        text: "Because I ship the look AND the engine. Most designers stop at pretty; most automators ignore design. I do both — so the site converts, not just impresses.",
+        text: "Fair question. It's because I ship the look AND the engine. Most designers stop at pretty, and most automation folks ignore design. I do both, so your site actually converts, it doesn't just impress people.",
       },
       {
         kind: "text",
-        text: "And I keep it honest: I won't invent client stats. What you get is the craft, the systems, references on request — and a Level 2 track record of 800+ projects.",
+        text: "And I'll always keep it straight with you. I won't make up client stats to sound impressive. What you get is the craft, the systems, references whenever you want them, and a Level 2 track record of 800+ projects behind me.",
       },
     ],
     followups: ["process", "work", "hire"],
@@ -291,7 +291,7 @@ export const ANSWERS: Answer[] = [
     chip: "Work with me 🤝",
     keywords: ["hire", "contact", "work with", "quote", "start", "reach", "email", "book", "talk", "call", "onboard", "begin"],
     bubbles: [
-      { kind: "text", text: "Let's build something 🙌 Easiest way in: book a quick call, or send me your project details right here — I'll scope it and reply within 24h." },
+      { kind: "text", text: "Let's build something good together 🙌 Easiest way in is to grab a quick call, or just drop me your project details right here. I'll scope it out and get back to you within 24 hours." },
       {
         kind: "actions",
         items: [
@@ -316,7 +316,7 @@ export const ANSWERS: Answer[] = [
     chip: "Pricing 💰",
     keywords: ["price", "pricing", "cost", "how much", "package", "packages", "rate", "rates", "budget", "fee", "fees", "investment"],
     bubbles: [
-      { kind: "text", text: "Two productised systems — clear scope, clear price. Custom builds are welcome too." },
+      { kind: "text", text: "Straight to the point, I like it 😅 I've got two ready-made systems with clear scope and clear pricing, and I'm always up for a custom build too." },
       {
         kind: "stat",
         items: [
@@ -325,7 +325,7 @@ export const ANSWERS: Answer[] = [
           { value: "30-day", label: "ROI guarantee" },
         ],
       },
-      { kind: "text", text: "Tap to see what's inside each package 👇" },
+      { kind: "text", text: "Have a look at what's inside each one 👇" },
       {
         kind: "actions",
         items: [
@@ -341,6 +341,6 @@ export const ANSWERS: Answer[] = [
 export const FALLBACK: Bubble[] = [
   {
     kind: "text",
-    text: "Good one — I'm a scripted version of Yasir, best on a few topics. Pick one and I'll dig in 👇",
+    text: "Ha, good one. I'm a scripted version of Yasir, so I'm best on a handful of topics. Pick one below and I'll dig right in 👇",
   },
 ];

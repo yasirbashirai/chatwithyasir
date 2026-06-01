@@ -8,11 +8,13 @@ export function Composer({
   onGif,
   onFile,
   disabled,
+  placeholder = "Message Yasir's Studio…",
 }: {
   onText: (t: string) => void;
   onGif: (url: string) => void;
   onFile: (file: File) => void;
   disabled?: boolean;
+  placeholder?: string;
 }) {
   const [value, setValue] = useState("");
   const [picker, setPicker] = useState<null | "emoji" | "gif">(null);
@@ -100,7 +102,7 @@ export function Composer({
               send();
             }
           }}
-          placeholder="Message Yasir's Studio…"
+          placeholder={placeholder}
           className="flex-1 bg-transparent px-3 py-2.5 text-[15px] text-ink placeholder:text-ink/40 outline-none min-w-0"
         />
 

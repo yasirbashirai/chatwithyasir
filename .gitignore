@@ -6,3 +6,6 @@ dist-ssr
 .vite
 *.log
 *.tsbuildinfo
+.env
+.env.*
+!.env.example

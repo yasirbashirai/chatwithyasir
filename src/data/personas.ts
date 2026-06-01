@@ -25,7 +25,7 @@ export const CREW: BotPersona[] = [
     color: "#36C9AB",
     role: "bot",
     tagline: "Yasir's AI assistant",
-    greeting: ["beep boop — Sparky online ⚡", "I'm the AI half of the studio. Ask me about automations!"],
+    greeting: ["beep boop, Sparky online ⚡", "I'm the AI half of the studio. Ask me about automations!"],
     quips: [
       "I can wire that into a workflow 🤖",
       "Automate it. Always automate it.",
@@ -70,7 +70,7 @@ export const CREW: BotPersona[] = [
     color: "#2563EB",
     role: "bot",
     tagline: "The dev",
-    greeting: ["Bolt ⚡ reporting", "React, Next, Tailwind — I ship clean."],
+    greeting: ["Bolt ⚡ reporting", "React, Next, Tailwind, I ship clean."],
     quips: [
       "Shipped it. 🚀",
       "That's a one-component fix.",
@@ -85,7 +85,7 @@ export const CREW: BotPersona[] = [
     color: "#165A4C",
     role: "bot",
     tagline: "Logistics expert",
-    greeting: ["Captain on deck 🚚", "Freight, carriers, 3PL — that's my lane."],
+    greeting: ["Captain on deck 🚚", "Freight, carriers, 3PL, that's my lane."],
     quips: [
       "We'd add FMCSA trust signals there 🛡️",
       "Carrier onboarding flow incoming.",

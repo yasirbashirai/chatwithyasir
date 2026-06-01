@@ -1,7 +1,21 @@
 import { motion } from "framer-motion";
-import type { Bubble, Member, Message, PanelId } from "../types";
+import type { Bubble, Member, Message, MsgStatus, PanelId } from "../types";
 import { Avatar } from "./Avatar";
 import { QUICK_REACTIONS } from "../data/emojis";
+
+const formatTime = (at?: number) =>
+  at ? new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+
+// WhatsApp-style ticks: ✓ sent · ✓✓ delivered · ✓✓ (teal) seen.
+function StatusTicks({ status }: { status?: MsgStatus }) {
+  if (!status) return null;
+  const seen = status === "seen";
+  return (
+    <span className={`font-bold ${seen ? "text-teal" : "text-ink/40"}`} title={status}>
+      {status === "sent" ? "✓" : "✓✓"}
+    </span>
+  );
+}
 
 function RichBubble({ bubble, onAction }: { bubble: Bubble; onAction: (p: PanelId) => void }) {
   switch (bubble.kind) {
@@ -178,6 +192,12 @@ export function MessageRow({
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Time + read receipt */}
+        <div className={`flex items-center gap-1 mt-0.5 px-1 text-[10px] text-ink/40 ${isMe ? "flex-row-reverse" : ""}`}>
+          <span>{formatTime(m.at)}</span>
+          {isMe && <StatusTicks status={m.status} />}
         </div>
 
         {/* Reaction pills */}

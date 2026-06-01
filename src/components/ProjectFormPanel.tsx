@@ -24,9 +24,17 @@ const BUDGETS = ["Under $1k", "$1k – $3k", "$3k – $5k", "$5k – $10k", "$10
 
 const field = "w-full glass rounded-2xl px-4 py-2.5 text-[15px] text-ink outline-none focus:ring-2 focus:ring-teal/40 transition";
 
-export function ProjectFormPanel({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+export function ProjectFormPanel({
+  onClose,
+  defaultName = "",
+  defaultEmail = "",
+}: {
+  onClose: () => void;
+  defaultName?: string;
+  defaultEmail?: string;
+}) {
+  const [name, setName] = useState(defaultName);
+  const [email, setEmail] = useState(defaultEmail);
   const [type, setType] = useState(PROJECT_TYPES[0]);
   const [budget, setBudget] = useState(BUDGETS[1]);
   const [message, setMessage] = useState("");
@@ -36,7 +44,7 @@ export function ProjectFormPanel({ onClose }: { onClose: () => void }) {
 
   const submit = () => {
     if (!valid) return;
-    const subject = `New project inquiry — ${name} (${type})`;
+    const subject = `New project inquiry from ${name} (${type})`;
     const body = [
       `Name: ${name}`,
       `Email: ${email}`,
@@ -46,7 +54,7 @@ export function ProjectFormPanel({ onClose }: { onClose: () => void }) {
       "Details:",
       message || "(none provided)",
       "",
-      "— Sent from Yasir's Studio chat",
+      "Sent from Yasir's Studio chat",
     ].join("\n");
     window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     setSent(true);
@@ -57,7 +65,7 @@ export function ProjectFormPanel({ onClose }: { onClose: () => void }) {
       <Panel emoji="🎉" title="Inquiry ready to send" onClose={onClose} maxWidth="max-w-md">
         <div className="text-center py-4">
           <p className="text-[15px] text-ink leading-relaxed">
-            Your email just opened, pre-filled — hit <b>send</b> and Yasir will get back to you,
+            Your email just opened, pre-filled, hit <b>send</b> and Yasir will get back to you,
             usually within 24 hours. Excited to build with you! 🚀
           </p>
           <button
@@ -75,7 +83,7 @@ export function ProjectFormPanel({ onClose }: { onClose: () => void }) {
     <Panel
       emoji="🚀"
       title="Start a project"
-      subtitle="Tell Yasir what you're building — he'll scope it and reply within 24h."
+      subtitle="Tell Yasir what you're building, he'll scope it and reply within 24h."
       onClose={onClose}
       maxWidth="max-w-md"
       footer={

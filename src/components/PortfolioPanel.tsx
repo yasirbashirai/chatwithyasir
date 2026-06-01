@@ -22,7 +22,7 @@ export function PortfolioPanel({ onClose }: { onClose: () => void }) {
     <Panel
       emoji="👀"
       title="Yasir's work"
-      subtitle={`${PROJECTS.length} real builds — tap any to visit it live.`}
+      subtitle={`${PROJECTS.length} real builds, tap any to visit it live.`}
       onClose={onClose}
       maxWidth="max-w-3xl"
       footer={

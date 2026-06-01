@@ -11,7 +11,7 @@ export function BookingPanel({ onClose }: { onClose: () => void }) {
     <Panel
       emoji="📅"
       title="Book a 30-min call"
-      subtitle="Pick a time that works — it lands straight on Yasir's calendar."
+      subtitle="Pick a time that works, it lands straight on Yasir's calendar."
       onClose={onClose}
       maxWidth="max-w-2xl"
       footer={

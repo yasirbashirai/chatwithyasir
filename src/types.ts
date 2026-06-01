@@ -22,6 +22,9 @@ export interface Member {
 
 export type MsgKind = "text" | "gif" | "image" | "file" | "rich" | "system";
 
+/** WhatsApp-style delivery state, shown on the visitor's own messages. */
+export type MsgStatus = "sent" | "delivered" | "seen";
+
 export interface Message {
   id: number;
   senderId: string; // member id, or "me"
@@ -34,4 +37,6 @@ export interface Message {
   bubbles?: Bubble[];
   reactions?: Record<string, string[]>; // emoji -> memberIds
   ts: number;
+  at?: number; // wall-clock epoch ms (for time + day dividers)
+  status?: MsgStatus; // only on "me" messages
 }
