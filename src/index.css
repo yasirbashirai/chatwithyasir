@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  background: #fdf6ee;
+  color: #0f2e27;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Liquid-glass surface — frosted, translucent, soft inner light */
+@layer components {
+  .glass {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow:
+      0 8px 32px rgba(15, 46, 39, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  .glass-teal {
+    background: linear-gradient(135deg, rgba(40, 134, 114, 0.92), rgba(54, 201, 171, 0.92));
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    box-shadow:
+      0 8px 28px rgba(22, 90, 76, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
+
+  .gold-ring {
+    box-shadow:
+      0 0 0 1.5px rgba(226, 169, 60, 0.9),
+      0 0 0 4px rgba(247, 208, 110, 0.25);
+  }
+}
+
+/* hide scrollbar but keep scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
