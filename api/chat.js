@@ -71,32 +71,63 @@ SCOPE
 KNOWLEDGE:
 ${KNOWLEDGE}`;
 
+// ---- Origin allowlist: only Yasir's own sites may call this endpoint, so a
+// random site can't embed it and burn the Gemini quota. Extra origins can be
+// added via the ALLOWED_ORIGINS env var (comma-separated).
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "https://chatwith.yasirbashir.com")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+function isAllowedOrigin(origin) {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  try {
+    const host = new URL(origin).hostname;
+    // localhost for dev, and this project's own Vercel preview deploys.
+    if (host === "localhost" || host === "127.0.0.1") return true;
+    if (host.endsWith(".vercel.app") && host.includes("chatwithyasir")) return true;
+  } catch {
+    /* malformed origin */
+  }
+  return false;
+}
+
 // ---- Best-effort, per-instance rate limit (light abuse guard) ----
 const HITS = new Map();
 const WINDOW_MS = 60_000;
-const MAX_PER_WINDOW = 20;
+const MAX_PER_WINDOW = 12;
 function rateLimited(ip) {
   const now = Date.now();
   const arr = (HITS.get(ip) || []).filter((t) => now - t < WINDOW_MS);
   arr.push(now);
   HITS.set(ip, arr);
+  // Opportunistic cleanup so the map doesn't grow unbounded.
+  if (HITS.size > 5000) for (const [k, v] of HITS) if (!v.some((t) => now - t < WINDOW_MS)) HITS.delete(k);
   return arr.length > MAX_PER_WINDOW;
 }
 
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+function setCors(res, origin) {
+  // Reflect the origin only if it's allowed; otherwise pin to the primary site
+  // so disallowed browsers get blocked by CORS.
+  res.setHeader("Access-Control-Allow-Origin", isAllowedOrigin(origin) ? origin : ALLOWED_ORIGINS[0]);
+  res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
 export default async function handler(req, res) {
+  const origin = (req.headers.origin || "").toString();
+
   if (req.method === "OPTIONS") {
-    setCors(res);
+    setCors(res, origin);
     return res.status(204).end();
   }
-  setCors(res);
+  setCors(res, origin);
 
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  // Only Yasir's own sites may use this endpoint (protects the Gemini quota).
+  if (!isAllowedOrigin(origin)) return res.status(403).json({ error: "Forbidden" });
   if (!API_KEY) return res.status(503).json({ error: "AI not configured" });
 
   const ip = (req.headers["x-forwarded-for"] || "").toString().split(",")[0].trim() || "anon";
