@@ -1,0 +1,14 @@
+{
+  "name": "Chatwith - Yasir Bashir",
+  "short_name": "Chatwith Yasir",
+  "description": "Chat with Yasir Bashir — AI Engineer building premium websites & AI growth systems that convert.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f9ebdc",
+  "theme_color": "#288672",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "/og-image.png", "sizes": "1200x526", "type": "image/png" }
+  ]
+}
