@@ -4,6 +4,7 @@ import type { Member, Message, PanelId } from "./types";
 import { BIO, OPENING_CHIPS, FALLBACK, ANSWERS } from "./data/conversation";
 import { HOST, botById } from "./data/personas";
 import { answerById, matchAnswer } from "./lib/match";
+import { askYasirAI, type AiTurn } from "./lib/ai";
 import { Onboarding } from "./components/Onboarding";
 import { Sidebar } from "./components/Sidebar";
 import { Composer } from "./components/Composer";
@@ -250,15 +251,33 @@ export default function App() {
     pushMsg({ senderId: "yasir", kind: "text", text });
   };
 
+  // Build a compact AI history from prior text messages + the new one.
+  const buildAiHistory = (text: string): AiTurn[] => {
+    const turns: AiTurn[] = messages
+      .filter((m) => (m.senderId === "me" || m.senderId === "yasir") && m.kind === "text" && m.text)
+      .slice(-10)
+      .map((m) => ({ role: m.senderId === "me" ? "user" : "model", text: m.text as string }));
+    turns.push({ role: "user", text });
+    return turns;
+  };
+
   const sendText = (text: string) =>
     run(async () => {
       playSend();
       pushMsg({ senderId: "me", kind: "text", text, status: "sent" });
       await sleep(250);
       setMyStatus("delivered");
-      const answer = matchAnswer(text);
       setMyStatus("seen"); // Yasir "reads" it before replying
-      await yasirRespond(answer ? answer.bubbles : FALLBACK, answer?.followups ?? OPENING_CHIPS);
+
+      // Live AI first; if it's unavailable (no key / offline / quota), fall back
+      // to the scripted keyword brain so the chat always responds.
+      const aiReply = await askYasirAI(buildAiHistory(text));
+      if (aiReply) {
+        await yasirRespond([{ kind: "text", text: aiReply }], OPENING_CHIPS);
+      } else {
+        const answer = matchAnswer(text);
+        await yasirRespond(answer ? answer.bubbles : FALLBACK, answer?.followups ?? OPENING_CHIPS);
+      }
       await maybeChime();
     });
 
