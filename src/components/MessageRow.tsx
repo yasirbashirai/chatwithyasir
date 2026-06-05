@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import type { Bubble, Member, Message, MsgStatus, PanelId } from "../types";
 import { Avatar } from "./Avatar";
@@ -5,6 +6,97 @@ import { QUICK_REACTIONS } from "../data/emojis";
 
 const formatTime = (at?: number) =>
   at ? new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+
+const fmtClock = (s: number) =>
+  `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
+// WhatsApp-style voice note: play/pause, a scrubbable progress bar and a clock.
+function AudioBubble({ m, isMe }: { m: Message; isMe: boolean }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0); // 0..1
+  const [cur, setCur] = useState(0);
+  const total = m.audioDuration ?? 0;
+
+  const toggle = () => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (playing) el.pause();
+    else el.play();
+  };
+
+  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = audioRef.current;
+    if (!el || !el.duration || !isFinite(el.duration)) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    el.currentTime = ratio * el.duration;
+  };
+
+  const accent = isMe ? "bg-white" : "bg-teal";
+  const track = isMe ? "bg-white/30" : "bg-ink/15";
+  const knob = isMe ? "bg-white" : "bg-teal-dark";
+
+  return (
+    <div className="flex items-center gap-3 min-w-[200px] max-w-[260px]">
+      <button
+        onClick={toggle}
+        className={`w-10 h-10 rounded-full shrink-0 flex items-center justify-center transition active:scale-90 ${
+          isMe ? "bg-white/20 text-white" : "bg-teal/15 text-teal-dark"
+        }`}
+        aria-label={playing ? "Pause" : "Play"}
+      >
+        {playing ? (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="5" width="4" height="14" rx="1" />
+            <rect x="14" y="5" width="4" height="14" rx="1" />
+          </svg>
+        ) : (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        )}
+      </button>
+
+      <div className="flex-1 min-w-0">
+        <div
+          onClick={seek}
+          className={`relative h-1.5 rounded-full cursor-pointer ${track}`}
+        >
+          <div
+            className={`absolute inset-y-0 left-0 rounded-full ${accent}`}
+            style={{ width: `${progress * 100}%` }}
+          />
+          <div
+            className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full shadow ${knob}`}
+            style={{ left: `${progress * 100}%` }}
+          />
+        </div>
+        <div className={`mt-1 text-[11px] tabular-nums ${isMe ? "text-white/80" : "text-ink/55"}`}>
+          {fmtClock(playing || cur > 0 ? cur : total)}
+        </div>
+      </div>
+
+      <audio
+        ref={audioRef}
+        src={m.audioUrl}
+        preload="metadata"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onTimeUpdate={(e) => {
+          const el = e.currentTarget;
+          setCur(el.currentTime);
+          if (el.duration && isFinite(el.duration)) setProgress(el.currentTime / el.duration);
+        }}
+        onEnded={() => {
+          setPlaying(false);
+          setProgress(0);
+          setCur(0);
+        }}
+      />
+    </div>
+  );
+}
 
 // WhatsApp-style ticks: ✓ sent · ✓✓ delivered · ✓✓ (teal) seen.
 function StatusTicks({ status }: { status?: MsgStatus }) {
@@ -90,12 +182,14 @@ function RichBubble({ bubble, onAction }: { bubble: Bubble; onAction: (p: PanelI
   }
 }
 
-function Content({ m, onAction }: { m: Message; onAction: (p: PanelId) => void }) {
+function Content({ m, isMe, onAction }: { m: Message; isMe: boolean; onAction: (p: PanelId) => void }) {
   switch (m.kind) {
     case "text":
       return <span className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">{m.text}</span>;
     case "gif":
       return <img src={m.gifUrl} alt="gif" className="rounded-xl max-w-[220px] w-full" />;
+    case "audio":
+      return <AudioBubble m={m} isMe={isMe} />;
     case "image":
       return <img src={m.fileUrl} alt={m.fileName} className="rounded-xl max-w-[240px] w-full" />;
     case "file":
@@ -173,7 +267,7 @@ export function MessageRow({
                   : "glass text-ink rounded-3xl rounded-tl-md px-4 py-2.5"
             }
           >
-            <Content m={m} onAction={onAction} />
+            <Content m={m} isMe={isMe} onAction={onAction} />
           </div>
 
           {/* Hover reaction bar */}

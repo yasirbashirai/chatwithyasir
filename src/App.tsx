@@ -295,6 +295,19 @@ export default function App() {
     });
   };
 
+  const sendAudio = (blob: Blob, durationSec: number) => {
+    if (busyRef.current) return;
+    playSend();
+    const url = URL.createObjectURL(blob);
+    pushMsg({
+      senderId: "me",
+      kind: "audio",
+      audioUrl: url,
+      audioDuration: durationSec,
+      status: "delivered",
+    });
+  };
+
   const invite = (id: string) =>
     run(async () => {
       const persona = botById(id);
@@ -557,6 +570,7 @@ export default function App() {
                   onText={IS_ADMIN ? adminSay : sendText}
                   onGif={sendGif}
                   onFile={sendFile}
+                  onAudio={sendAudio}
                   placeholder={IS_ADMIN ? "Reply as Yasir (admin)…" : undefined}
                 />
               </div>

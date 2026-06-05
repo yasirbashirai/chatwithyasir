@@ -20,7 +20,7 @@ export interface Member {
   email?: string; // set for people the client invites
 }
 
-export type MsgKind = "text" | "gif" | "image" | "file" | "rich" | "system";
+export type MsgKind = "text" | "gif" | "image" | "file" | "audio" | "rich" | "system";
 
 /** WhatsApp-style delivery state, shown on the visitor's own messages. */
 export type MsgStatus = "sent" | "delivered" | "seen";
@@ -34,6 +34,8 @@ export interface Message {
   fileName?: string;
   fileSize?: string;
   fileUrl?: string;
+  audioUrl?: string;
+  audioDuration?: number; // seconds
   bubbles?: Bubble[];
   reactions?: Record<string, string[]>; // emoji -> memberIds
   ts: number;
