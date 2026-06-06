@@ -65,13 +65,18 @@ const corsMw = cors({
 });
 
 // ---- App + HTTP + Socket.IO on one port ----
+// Voice notes / photos / files are uploaded inline as base64 data URLs, so the
+// JSON body limit must be generous (base64 adds ~33%). 12mb covers ~8mb files.
+const MEDIA_BODY_LIMIT = "12mb";
+
 const app = express();
 app.use(corsMw);
-app.use(express.json());
+app.use(express.json({ limit: MEDIA_BODY_LIMIT }));
 
 const httpServer = createServer(app);
 const io = new SocketServer(httpServer, {
   cors: { origin: (origin, cb) => cb(null, originAllowed(origin)) },
+  maxHttpBufferSize: 12e6, // allow media payloads over the socket too
 });
 
 // ---- Auth helpers ----
@@ -157,25 +162,57 @@ app.post("/api/conversation", async (req, res) => {
 
 // Visitor (or the visitor's own AI reply) posts a message. Validated by token.
 // sender must be 'visitor' or 'ai' here — 'yasir'/'system' only via sockets.
+// Optional media (base64 data URL) carries voice notes, photos, and files.
+const MAX_MEDIA_CHARS = 11_000_000; // ~8mb decoded; guards the DB + socket
 app.post("/api/message", async (req, res) => {
   if (!dbConfigured) return res.status(503).json({ error: "Storage not configured" });
   if (rateLimited(ipOf(req), 60)) return res.status(429).json({ error: "Slow down" });
-  const { conversationId, visitorToken, text, sender = "visitor" } = req.body || {};
+  const {
+    conversationId,
+    visitorToken,
+    text,
+    sender = "visitor",
+    kind = "text",
+    media = null,
+    fileName = null,
+    audioDuration = null,
+    fileSize = null,
+  } = req.body || {};
   const who = sender === "ai" ? "ai" : "visitor";
-  if (!text || !String(text).trim()) return res.status(400).json({ error: "Empty message" });
+  // A message needs either text or media.
+  if ((!text || !String(text).trim()) && !media) return res.status(400).json({ error: "Empty message" });
+  if (media && String(media).length > MAX_MEDIA_CHARS) return res.status(413).json({ error: "File too large" });
   try {
     const ok = await validateVisitor(conversationId, visitorToken);
     if (!ok) return res.status(403).json({ error: "Invalid conversation" });
-    const msg = await addMessage({ conversationId, sender: who, text });
+    const msg = await addMessage({
+      conversationId,
+      sender: who,
+      text: text || "",
+      kind,
+      media,
+      fileName,
+      audioDuration: audioDuration ? Math.round(Number(audioDuration)) : null,
+      fileSize,
+    });
     // Deliver to anyone watching this conversation (Yasir if he's opened it).
     io.to(convRoom(conversationId)).emit("message", { conversationId, ...msg });
-    io.to(ADMIN_ROOM).emit("admin:update", { conversationId, last_text: msg.text, at: msg.created_at });
+    io.to(ADMIN_ROOM).emit("admin:update", {
+      conversationId,
+      last_text: msg.text || mediaLabel(msg.kind),
+      at: msg.created_at,
+    });
     res.status(201).json({ ok: true, id: msg.id });
   } catch (e) {
     console.error("addMessage failed:", e?.message || e);
     res.status(500).json({ error: "Could not save message" });
   }
 });
+
+// Short label for the conversation-list preview when a message is media-only.
+function mediaLabel(kind) {
+  return kind === "audio" ? "🎤 Voice message" : kind === "image" ? "📷 Photo" : kind === "file" ? "📎 File" : kind === "gif" ? "GIF" : "";
+}
 
 // Admin: list conversations (newest first).
 app.get("/api/admin/conversations", requireAuth, async (_req, res) => {

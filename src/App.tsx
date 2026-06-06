@@ -17,7 +17,7 @@ import { PortfolioPanel } from "./components/PortfolioPanel";
 import { PricingPanel } from "./components/PricingPanel";
 import { AdminConsole } from "./components/AdminConsole";
 import { ProfilePanel } from "./components/ProfilePanel";
-import { createConversation, connectVisitor, persistMessage, liveConfigured } from "./lib/live";
+import { createConversation, connectVisitor, persistMessage, persistMedia, fileToDataUrl, MAX_UPLOAD_BYTES, liveConfigured } from "./lib/live";
 import type { Socket } from "socket.io-client";
 import { loadSession, saveSession, clearSession, loadProfile, saveProfile, clearProfile, type Session } from "./lib/session";
 import { saveTranscriptAsPdf } from "./lib/transcript";
@@ -403,11 +403,32 @@ export default function App() {
       await maybeChime();
     });
 
+  // Upload a voice note / photo / file to the server so Yasir can play/view it
+  // in the admin dashboard. Stored inline (base64) for now. Best-effort — if it
+  // fails or is too big, the visitor still sees it locally.
+  const uploadMedia = async (
+    file: Blob,
+    kind: "audio" | "image" | "file",
+    extra: { fileName?: string; fileSize?: string; audioDuration?: number },
+  ) => {
+    if (!liveConfigured || !convRef.current || !tokenRef.current) return;
+    if (file.size > MAX_UPLOAD_BYTES) return; // too large to store inline
+    try {
+      const media = await fileToDataUrl(file);
+      await persistMedia(convRef.current, tokenRef.current, { kind, media, ...extra });
+    } catch {
+      /* non-blocking */
+    }
+  };
+
   const sendGif = (url: string) => {
     if (busyRef.current) return;
     playSend();
     pushMsg({ senderId: "me", kind: "gif", gifUrl: url, status: "delivered" });
-    persist("[sent a GIF]", "visitor");
+    // GIFs are small external URLs — store the link, not bytes.
+    if (convRef.current && tokenRef.current) {
+      persistMedia(convRef.current, tokenRef.current, { kind: "gif", media: url, text: "[GIF]" });
+    }
   };
 
   const sendFile = (file: File) => {
@@ -423,7 +444,7 @@ export default function App() {
       fileSize: fmtSize(file.size),
       status: "delivered",
     });
-    persist(`[sent a ${isImage ? "photo" : "file"}: ${file.name}]`, "visitor");
+    uploadMedia(file, isImage ? "image" : "file", { fileName: file.name, fileSize: fmtSize(file.size) });
   };
 
   const sendAudio = (blob: Blob, durationSec: number) => {
@@ -437,7 +458,7 @@ export default function App() {
       audioDuration: durationSec,
       status: "delivered",
     });
-    persist("[sent a voice message]", "visitor");
+    uploadMedia(blob, "audio", { audioDuration: durationSec });
   };
 
   const invite = (id: string) =>

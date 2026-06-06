@@ -47,6 +47,14 @@ create table if not exists messages (
   created_at      timestamptz default now()
 );
 
+-- Media columns (added incrementally so existing tables upgrade in place).
+-- For now media is stored inline as a base64 data URL in `media` (Option B:
+-- no external storage). Swap to a storage URL later without schema changes.
+alter table messages add column if not exists media text;
+alter table messages add column if not exists file_name text;
+alter table messages add column if not exists audio_duration integer;
+alter table messages add column if not exists file_size text;
+
 create index if not exists messages_conv_idx on messages (conversation_id, created_at);
 create index if not exists conversations_recent_idx on conversations (last_message_at desc);
 `;
@@ -118,7 +126,7 @@ export async function getTranscript(conversationId) {
   );
   if (!head.rows.length) return null;
   const msgs = await pool.query(
-    `select id, sender, kind, text, created_at
+    `select id, sender, kind, text, media, file_name, audio_duration, file_size, created_at
        from messages where conversation_id = $1
       order by created_at asc, id asc`,
     [conversationId],
@@ -128,13 +136,26 @@ export async function getTranscript(conversationId) {
 
 // ---- Messages ----
 
-/** Append a message and bump the conversation's last_message_at. */
-export async function addMessage({ conversationId, sender, text, kind = "text" }) {
+/**
+ * Append a message and bump the conversation's last_message_at. `media` (a
+ * base64 data URL) + fileName/audioDuration/fileSize are optional — set for
+ * voice notes, photos, and files.
+ */
+export async function addMessage({
+  conversationId,
+  sender,
+  text,
+  kind = "text",
+  media = null,
+  fileName = null,
+  audioDuration = null,
+  fileSize = null,
+}) {
   const { rows } = await pool.query(
-    `insert into messages (conversation_id, sender, text, kind)
-     values ($1, $2, $3, $4)
-     returning id, sender, kind, text, created_at`,
-    [conversationId, sender, String(text).slice(0, 4000), kind],
+    `insert into messages (conversation_id, sender, text, kind, media, file_name, audio_duration, file_size)
+     values ($1, $2, $3, $4, $5, $6, $7, $8)
+     returning id, sender, kind, text, media, file_name, audio_duration, file_size, created_at`,
+    [conversationId, sender, String(text).slice(0, 4000), kind, media, fileName, audioDuration, fileSize],
   );
   await pool.query(`update conversations set last_message_at = now() where id = $1`, [
     conversationId,

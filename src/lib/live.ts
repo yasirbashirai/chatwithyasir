@@ -15,10 +15,17 @@ export interface ServerMessage {
   id: number;
   conversationId: string;
   sender: "visitor" | "yasir" | "ai" | "system";
-  kind: string;
+  kind: string; // text | audio | image | file | gif | system
   text: string;
+  media?: string | null; // base64 data URL (voice note / photo / file) or gif URL
+  file_name?: string | null;
+  audio_duration?: number | null;
+  file_size?: string | null;
   created_at: string;
 }
+
+// Cap inline uploads so we don't blow the DB / socket limits (~8mb decoded).
+export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
 /** A conversation row for the admin list. */
 export interface ConversationRow {
@@ -76,6 +83,46 @@ export async function persistMessage(
   } catch {
     /* offline — non-blocking */
   }
+}
+
+/**
+ * Persist a media message (voice note / photo / file) — the media is a base64
+ * data URL stored inline. Fire-and-forget. Returns false if it wasn't sent.
+ */
+export async function persistMedia(
+  conversationId: string,
+  visitorToken: string,
+  payload: {
+    kind: "audio" | "image" | "file" | "gif";
+    media: string;
+    text?: string;
+    fileName?: string;
+    audioDuration?: number;
+    fileSize?: string;
+    sender?: "visitor" | "ai";
+  },
+): Promise<boolean> {
+  if (!API_URL || !conversationId || !visitorToken) return false;
+  try {
+    const r = await fetch(`${API_URL}/api/message`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ conversationId, visitorToken, sender: "visitor", ...payload }),
+    });
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Read a Blob/File into a base64 data URL (for inline upload). */
+export function fileToDataUrl(file: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 
 export interface VisitorHandlers {

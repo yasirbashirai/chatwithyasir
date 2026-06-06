@@ -315,16 +315,32 @@ export function AdminConsole({ onClose, focusId }: { onClose: () => void; focusI
               }
               const mine = m.sender === "yasir";
               const tag = m.sender === "ai" ? "AI" : m.sender === "visitor" ? conv?.visitor_name || "Visitor" : "You";
+              const isImg = (m.kind === "image" || m.kind === "gif") && m.media;
               return (
                 <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
                   <span className="text-[10px] font-semibold text-ink/40 mb-0.5 px-1">{tag}</span>
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-[14px] leading-relaxed whitespace-pre-wrap ${
-                      mine ? "glass-teal text-white" : m.sender === "ai" ? "bg-teal/10 text-ink" : "glass text-ink"
-                    }`}
-                  >
-                    {m.text}
-                  </div>
+                  {isImg ? (
+                    <a href={m.media!} target="_blank" rel="noopener noreferrer">
+                      <img src={m.media!} alt="" className="max-w-[220px] max-h-[220px] rounded-2xl object-cover" />
+                    </a>
+                  ) : (
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-[14px] leading-relaxed whitespace-pre-wrap ${
+                        mine ? "glass-teal text-white" : m.sender === "ai" ? "bg-teal/10 text-ink" : "glass text-ink"
+                      }`}
+                    >
+                      {m.kind === "audio" && m.media ? (
+                        <audio controls src={m.media} className="max-w-[240px] align-middle" />
+                      ) : m.kind === "file" && m.media ? (
+                        <a href={m.media} download={m.file_name || "file"} className="underline break-all">
+                          📎 {m.file_name || "Download file"}
+                          {m.file_size ? ` · ${m.file_size}` : ""}
+                        </a>
+                      ) : (
+                        m.text
+                      )}
+                    </div>
+                  )}
                   <span className="text-[10px] text-ink/35 mt-0.5 px-1">{timeAgo(m.created_at)}</span>
                 </div>
               );
