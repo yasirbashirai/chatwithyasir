@@ -6,6 +6,7 @@
   "description": "Live chat backend for chatwithyasir — capture, email alerts, real-time join.",
   "main": "index.js",
   "scripts": {
+    "build": "echo \"No build step needed for the server.\"",
     "start": "node index.js",
     "dev": "node --watch index.js",
     "hash": "node hash.js"
