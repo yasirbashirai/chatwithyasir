@@ -48,8 +48,8 @@ create table if not exists messages (
 );
 
 -- Media columns (added incrementally so existing tables upgrade in place).
--- For now media is stored inline as a base64 data URL in `media` (Option B:
--- no external storage). Swap to a storage URL later without schema changes.
+-- For now media is stored inline as a base64 data URL in the media column
+-- (Option B, no external storage). Swap to a storage URL later, no schema change.
 alter table messages add column if not exists media text;
 alter table messages add column if not exists file_name text;
 alter table messages add column if not exists audio_duration integer;
