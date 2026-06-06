@@ -117,7 +117,10 @@ export function Onboarding({
             placeholder="Your email…"
             className="w-full glass rounded-2xl px-4 py-3 text-[15px] text-ink placeholder:text-ink/40 outline-none mb-1"
           />
-          <p className="text-[11px] text-ink/45 mb-4">So Yasir knows who he's talking to. No spam, ever.</p>
+          <p className="text-[11px] text-ink/45 mb-4">
+            So Yasir knows who he's talking to. No spam, ever. Your chat may be saved and read by
+            Yasir so he can jump in and help.
+          </p>
 
           {/* Emoji picker */}
           <div className="text-[12px] font-semibold text-ink/50 mb-1.5">Pick an avatar</div>

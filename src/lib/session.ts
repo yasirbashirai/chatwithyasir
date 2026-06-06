@@ -11,6 +11,12 @@ export interface Session {
   members: Member[];
   messages: Message[];
   chips: string[];
+  // Live backend (when VITE_API_URL is set): the server-side conversation this
+  // session maps to, plus the visitor's capability token, so a resumed chat
+  // keeps writing to the same record and stays in sync with Yasir.
+  conversationId?: string;
+  visitorToken?: string;
+  humanActive?: boolean; // true once Yasir has joined → AI stays silent
 }
 
 export function loadSession(): Session | null {

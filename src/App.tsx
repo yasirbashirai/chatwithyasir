@@ -17,7 +17,8 @@ import { PortfolioPanel } from "./components/PortfolioPanel";
 import { PricingPanel } from "./components/PricingPanel";
 import { AdminConsole } from "./components/AdminConsole";
 import { ProfilePanel } from "./components/ProfilePanel";
-import { postLead } from "./lib/api";
+import { createConversation, connectVisitor, persistMessage, liveConfigured } from "./lib/live";
+import type { Socket } from "socket.io-client";
 import { loadSession, saveSession, clearSession, loadProfile, saveProfile, clearProfile, type Session } from "./lib/session";
 import { saveTranscriptAsPdf } from "./lib/transcript";
 import { playStart, playSend, playReceive, playTap, playTyping, soundEnabled, setSoundEnabled } from "./lib/sound";
@@ -31,6 +32,17 @@ const IS_ADMIN = (() => {
     return p.get("admin") === "yasir" || window.location.hash === "#admin";
   } catch {
     return false;
+  }
+})();
+
+// Email alerts link to /?admin=yasir#c=<id> — pull the conversation id so the
+// admin console can auto-open straight to that chat.
+const FOCUS_CONV = (() => {
+  try {
+    const m = window.location.hash.match(/c=([0-9a-fA-F-]+)/);
+    return m ? m[1] : undefined;
+  } catch {
+    return undefined;
   }
 })();
 
@@ -99,9 +111,20 @@ export default function App() {
   const [activePanel, setActivePanel] = useState<PanelId | null>(null);
   const [savedExists, setSavedExists] = useState(() => !IS_ADMIN && !!loadSession());
   const [soundOn, setSoundOn] = useState(soundEnabled);
-  const [showAdmin, setShowAdmin] = useState(false);
+  // Auto-open the admin console straight to a conversation when arriving from an
+  // email alert link (/?admin=yasir#c=<id>).
+  const [showAdmin, setShowAdmin] = useState(IS_ADMIN && !!FOCUS_CONV);
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState(loadProfile);
+
+  // ---- Live backend (visitor side) ----
+  const [humanActive, setHumanActive] = useState<boolean>(!!boot.humanActive);
+  const socketRef = useRef<Socket | null>(null);
+  // Refs mirror the live ids/flag so async send flows read the latest value.
+  const convRef = useRef<string | undefined>(boot.conversationId);
+  const tokenRef = useRef<string | undefined>(boot.visitorToken);
+  const humanActiveRef = useRef<boolean>(!!boot.humanActive);
+  const yasirTypingTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const idRef = useRef(boot.messages.reduce((mx, m) => Math.max(mx, m.id), 0));
   const tsRef = useRef(boot.messages.reduce((mx, m) => Math.max(mx, m.ts), 0));
@@ -170,6 +193,59 @@ export default function App() {
     }
   };
 
+  // ---- Live backend wiring (visitor side) ----
+  const setLiveIds = (conversationId?: string, visitorToken?: string) => {
+    convRef.current = conversationId;
+    tokenRef.current = visitorToken;
+  };
+
+  // Persist a message to the server transcript (no-op if backend not configured).
+  const persist = (text: string, sender: "visitor" | "ai" = "visitor") => {
+    if (convRef.current && tokenRef.current && text) {
+      persistMessage(convRef.current, tokenRef.current, text, sender);
+    }
+  };
+
+  // Open the realtime socket so the visitor receives Yasir's live replies + the
+  // AI-yields-to-human signal. Safe to call repeatedly (replaces the old socket).
+  const connectLive = (conversationId: string, visitorToken: string) => {
+    if (!liveConfigured) return;
+    setLiveIds(conversationId, visitorToken);
+    socketRef.current?.disconnect();
+    socketRef.current = connectVisitor(conversationId, visitorToken, {
+      onMessage: (m) => {
+        if (m.sender === "system") {
+          pushMsg({ senderId: "sys", kind: "system", text: m.text });
+        } else {
+          setTypingId(null);
+          playReceive();
+          pushMsg({ senderId: "yasir", kind: "text", text: m.text });
+        }
+      },
+      onHumanActive: (active) => {
+        setHumanActive(active);
+        humanActiveRef.current = active;
+        if (active) setChips([]); // a human is here — drop the scripted prompts
+      },
+      onTyping: () => {
+        setTypingId("yasir");
+        if (yasirTypingTimer.current) clearTimeout(yasirTypingTimer.current);
+        yasirTypingTimer.current = setTimeout(() => setTypingId(null), 1800);
+      },
+    });
+  };
+
+  // Reconnect a resumed conversation on first mount; tidy up on unmount.
+  useEffect(() => {
+    if (!IS_ADMIN && boot.phase === "chat" && boot.conversationId && boot.visitorToken) {
+      connectLive(boot.conversationId, boot.visitorToken);
+    }
+    return () => {
+      socketRef.current?.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ---- Actions ----
   const join = (info: { name: string; emoji: string; color: string; email: string }) => {
     const meMember: Member = { id: "me", role: "guest", ...info };
@@ -179,9 +255,13 @@ export default function App() {
     saveProfile(info);
     setPhase("chat");
     playStart();
-    postLead({ name: info.name, email: info.email, source: "onboarding" }); // captured if backend is configured
     run(async () => {
       pushMsg({ senderId: "sys", kind: "system", text: `${info.name} joined the chat 🎉` });
+      // Capture the visitor durably + open the live channel (if backend is set).
+      if (liveConfigured) {
+        const res = await createConversation(info.name, info.email, "onboarding");
+        if (res) connectLive(res.conversationId, res.visitorToken);
+      }
       await sleep(400);
       await yasirRespond(BIO, OPENING_CHIPS);
     });
@@ -210,17 +290,31 @@ export default function App() {
     setChips(s.chips);
     idRef.current = s.messages.reduce((mx, m) => Math.max(mx, m.id), 0);
     tsRef.current = s.messages.reduce((mx, m) => Math.max(mx, m.ts), 0);
+    setHumanActive(!!s.humanActive);
+    humanActiveRef.current = !!s.humanActive;
     setPhase("chat");
     playStart();
+    // Re-open the live channel for the resumed conversation.
+    if (s.conversationId && s.visitorToken) connectLive(s.conversationId, s.visitorToken);
   };
 
   const pauseExit = () => {
     setPhase("onboarding"); // session stays saved → "Resume" appears
   };
 
+  // Drop the live connection + ids (used when a chat ends).
+  const teardownLive = () => {
+    socketRef.current?.disconnect();
+    socketRef.current = null;
+    setLiveIds(undefined, undefined);
+    setHumanActive(false);
+    humanActiveRef.current = false;
+  };
+
   const startOver = () => {
     clearSession();
     clearProfile();
+    teardownLive();
     setProfile(null);
     setSavedExists(false);
     setMessages([]);
@@ -234,6 +328,7 @@ export default function App() {
   // so they can sign back in (Continue as …) from the welcome screen.
   const signOut = () => {
     clearSession();
+    teardownLive();
     setSavedExists(false);
     setShowProfile(false);
     setMessages([]);
@@ -261,22 +356,33 @@ export default function App() {
     return turns;
   };
 
+  // Concatenate the text bubbles of a scripted answer (for the transcript).
+  const bubblesText = (bubbles: typeof BIO) =>
+    bubbles.filter((b) => b.kind === "text").map((b) => (b as { text: string }).text).join("\n");
+
   const sendText = (text: string) =>
     run(async () => {
       playSend();
       pushMsg({ senderId: "me", kind: "text", text, status: "sent" });
+      persist(text, "visitor"); // save to the durable transcript
       await sleep(250);
       setMyStatus("delivered");
       setMyStatus("seen"); // Yasir "reads" it before replying
+
+      // If Yasir has joined this chat, the AI stays silent — he replies live.
+      if (humanActiveRef.current) return;
 
       // Live AI first; if it's unavailable (no key / offline / quota), fall back
       // to the scripted keyword brain so the chat always responds.
       const aiReply = await askYasirAI(buildAiHistory(text));
       if (aiReply) {
         await yasirRespond([{ kind: "text", text: aiReply }], OPENING_CHIPS);
+        persist(aiReply, "ai");
       } else {
         const answer = matchAnswer(text);
-        await yasirRespond(answer ? answer.bubbles : FALLBACK, answer?.followups ?? OPENING_CHIPS);
+        const bubbles = answer ? answer.bubbles : FALLBACK;
+        await yasirRespond(bubbles, answer?.followups ?? OPENING_CHIPS);
+        persist(bubblesText(bubbles), "ai");
       }
       await maybeChime();
     });
@@ -287,9 +393,12 @@ export default function App() {
       if (!answer) return;
       playTap();
       pushMsg({ senderId: "me", kind: "text", text: answer.chip, status: "sent" });
+      persist(answer.chip, "visitor");
       await sleep(250);
       setMyStatus("seen");
+      if (humanActiveRef.current) return; // Yasir is handling it live
       await yasirRespond(answer.bubbles, answer.followups ?? OPENING_CHIPS);
+      persist(bubblesText(answer.bubbles), "ai");
       await maybeChime();
     });
 
@@ -297,6 +406,7 @@ export default function App() {
     if (busyRef.current) return;
     playSend();
     pushMsg({ senderId: "me", kind: "gif", gifUrl: url, status: "delivered" });
+    persist("[sent a GIF]", "visitor");
   };
 
   const sendFile = (file: File) => {
@@ -312,6 +422,7 @@ export default function App() {
       fileSize: fmtSize(file.size),
       status: "delivered",
     });
+    persist(`[sent a ${isImage ? "photo" : "file"}: ${file.name}]`, "visitor");
   };
 
   const sendAudio = (blob: Blob, durationSec: number) => {
@@ -325,6 +436,7 @@ export default function App() {
       audioDuration: durationSec,
       status: "delivered",
     });
+    persist("[sent a voice message]", "visitor");
   };
 
   const invite = (id: string) =>
@@ -396,9 +508,18 @@ export default function App() {
   // Auto-save so a visitor can pause & resume. (Admin sessions aren't persisted.)
   useEffect(() => {
     if (IS_ADMIN || phase !== "chat" || !me) return;
-    saveSession({ phase, me, members, messages, chips });
+    saveSession({
+      phase,
+      me,
+      members,
+      messages,
+      chips,
+      conversationId: convRef.current,
+      visitorToken: tokenRef.current,
+      humanActive,
+    });
     setSavedExists(true);
-  }, [phase, me, members, messages, chips]);
+  }, [phase, me, members, messages, chips, humanActive]);
 
   const typingMember = typingId ? memberById(typingId) : null;
 
@@ -657,9 +778,9 @@ export default function App() {
             )}
           </AnimatePresence>
 
-          {/* Admin console (login + captured leads) */}
+          {/* Admin console (login + live conversations + join) */}
           <AnimatePresence>
-            {showAdmin && <AdminConsole key="admin" onClose={() => setShowAdmin(false)} />}
+            {showAdmin && <AdminConsole key="admin" focusId={FOCUS_CONV} onClose={() => setShowAdmin(false)} />}
           </AnimatePresence>
 
           {/* Visitor profile (sign out / switch) */}

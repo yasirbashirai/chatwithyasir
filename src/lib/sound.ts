@@ -91,6 +91,18 @@ export function playReceive() {
   note(1174.66, t + 0.1, 0.32, { gain: 0.1 }); // D6
 }
 
+// Attention ping for the admin dashboard — a clear two-note "ding-dong" that
+// stands apart from the in-chat sounds. Used when a new visitor chat opens.
+export function playAlert() {
+  if (!enabled) return;
+  const c = ac();
+  if (!c) return;
+  const t = c.currentTime;
+  note(987.77, t, 0.3, { gain: 0.14 }); // B5
+  note(1318.51, t + 0.16, 0.45, { gain: 0.13 }); // E6
+  note(987.77, t + 0.42, 0.4, { gain: 0.11 }); // B5
+}
+
 // Subtle blip for tapping an option / quick action.
 export function playTap() {
   if (!enabled) return;
