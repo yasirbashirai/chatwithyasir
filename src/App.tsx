@@ -111,9 +111,10 @@ export default function App() {
   const [activePanel, setActivePanel] = useState<PanelId | null>(null);
   const [savedExists, setSavedExists] = useState(() => !IS_ADMIN && !!loadSession());
   const [soundOn, setSoundOn] = useState(soundEnabled);
-  // Auto-open the admin console straight to a conversation when arriving from an
-  // email alert link (/?admin=yasir#c=<id>).
-  const [showAdmin, setShowAdmin] = useState(IS_ADMIN && !!FOCUS_CONV);
+  // In admin mode, open the console (login → live dashboard) automatically, so
+  // visiting /?admin=yasir lands straight on the sign-in instead of the chat
+  // screen. (#c=<id> from an email alert focuses that conversation.)
+  const [showAdmin, setShowAdmin] = useState(IS_ADMIN);
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState(loadProfile);
 
